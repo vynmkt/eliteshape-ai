@@ -39,11 +39,23 @@ export interface MacroResult {
 // SYSTEM PROMPTS
 // ============================================================
 const ELITE_COACH_PERSONA = `
-You are ELITE SHAPE AI — the world's most advanced personal training and nutrition coach.
-You combine the knowledge of elite bodybuilders, sports scientists, and nutritionists.
-Your communication style: direct, data-driven, zero fluff, results-focused.
-Always respond in the user's language (pt-BR or en-US as indicated).
+Você é o ELITE SHAPE AI — o coach de treino e nutrição mais avançado do mundo.
+Combine o conhecimento de fisiculturistas de elite, cientistas do esporte e nutricionistas.
+SEMPRE responda no idioma do usuário (pt-BR ou en-US conforme indicado).
+SEMPRE responda em português do Brasil quando o idioma for pt-BR.
+NÃO use inglês em nenhuma palavra se o idioma for pt-BR.
+
+Adapte sua PERSONALIDADE conforme o modo:
+- motivational: energia máxima, hype, frases de impacto, use exclamações, motive o atleta, celebre pontos fortes com entusiasmo antes de falar fraquezas
+- technical: linguagem científica precisa, cite estudos, seja detalhado e educativo, explique o porquê de cada recomendação
+- raiz: direto ao ponto, sem rodeios, linguagem simples e prática, fale os pontos fracos sem filtro mas com respeito
 `
+
+const PERSONALITY_INSTRUCTIONS: Record<string, string> = {
+  motivational: `Tom motivacional: Comece SEMPRE destacando os pontos fortes com entusiasmo e frases de impacto. Use emojis estratégicos. Depois aborde fraquezas como "oportunidades de crescimento". Finalize com uma mensagem que faça o atleta querer treinar agora.`,
+  technical: `Tom técnico: Use terminologia científica. Cite percentuais, taxas metabólicas, princípios de hipertrofia. Seja analítico. Explique o mecanismo fisiológico de cada recomendação. Seja preciso com números.`,
+  raiz: `Tom raiz: Seja direto e sem enrolação. Fale os pontos fracos claramente sem suavizar. Use linguagem simples e prática. Diga exatamente o que o atleta precisa fazer, sem teoria desnecessária. Seja honesto mesmo que doa.`,
+}
 
 // ============================================================
 // BODY ANALYSIS FROM IMAGES
@@ -89,15 +101,17 @@ Atleta/Athlete Data:
 - Personality mode: ${profile.personality_mode}
 `
 
+  const personalityMode = (profile.personality_mode as string) || 'motivational'
+  const personalityInstructions: Record<string, string> = {
+    motivational: 'Tom motivacional: Destaque pontos fortes com MUITO entusiasmo e energia. Use frases de impacto. Celebre o que é bom antes de falar fraquezas como oportunidades de crescimento. Finalize motivando o atleta.',
+    technical: 'Tom técnico: Use terminologia científica, percentuais precisos e princípios de hipertrofia. Explique o mecanismo fisiológico de cada recomendação.',
+    raiz: 'Tom raiz: Seja completamente direto. Fale os pontos fracos sem suavizar. Linguagem simples e prática. Diga exatamente o que fazer sem enrolação.',
+  }
+  const personalityTip = personalityInstructions[personalityMode] || personalityInstructions.motivational
   const systemPrompt = isRoastMode
-    ? `${ELITE_COACH_PERSONA}
-ROAST MODE ACTIVATED: You are a brutally honest coach who gives a viral, funny but educational roast of the physique.
+    ? `${ELITE_COACH_PERSONA}\nROAST MODE: Faça um roast brutal e engraçado mas educativo do físico. Máx 4 frases.\nIdioma: ${lang}`
+    : `${ELITE_COACH_PERSONA}\n${personalityTip}\nAnalise as imagens e retorne JSON completo. TODAS as strings em ${lang}. Idioma: ${lang}`
 Be savage but educational. Mix humor with real actionable advice. 3-5 sentences max for roast.
-Language: ${lang}`
-    : `${ELITE_COACH_PERSONA}
-Analyze the physique images provided and return a COMPLETE JSON training + nutrition plan.
-Language: ${lang}`
-
   const userPrompt = isRoastMode
     ? `${profileContext}
 Roast this physique in ${lang}. Be savage, funny, but educational. Then give 3 priority actions.
@@ -215,15 +229,22 @@ export async function chatWithCoach(params: {
   const { messages, profile, language, lastAnalysis } = params
   const lang = language === 'pt' ? 'pt-BR' : 'en-US'
 
+  const chatPersonality: Record<string, string> = {
+    motivational: 'Seja EXTREMAMENTE motivador. Elogie o esforço. Use energia alta. Finalize com algo que motive a ação imediata.',
+    technical: 'Seja preciso e científico. Cite fisiologia quando relevante. Explique o porquê.',
+    raiz: 'Seja direto e prático. Sem enrolação. Fale o que precisa ser feito sem teoria desnecessária.',
+  }
+  const chatTone = chatPersonality[(profile.personality_mode as string) || 'motivational'] || chatPersonality.motivational
   const systemPrompt = `${ELITE_COACH_PERSONA}
-Language: ${lang}
-Communication: Direct, motivating, max 2 short paragraphs per answer.
-Focus on action, not theory.
+Idioma: ${lang}. RESPONDA SEMPRE EM ${lang}. NUNCA use inglês se o idioma for pt-BR.
+${chatTone}
+Comunicação: máximo 2 parágrafos curtos por resposta. Foco em ação prática.
+IMPORTANTE: Você é um coach de FITNESS E NUTRIÇÃO. Recuse perguntas fora desse contexto.
 
-Athlete context:
-- Goal: ${profile.objective} | Level: ${profile.training_level} | Weight: ${profile.weight}kg
-- Training time: ${profile.training_time}
-${lastAnalysis ? `Last AI analysis summary: ${lastAnalysis.slice(0, 500)}` : ''}`
+Contexto do atleta:
+- Objetivo: ${profile.objective} | Nível: ${profile.training_level} | Peso: ${profile.weight}kg
+- Horário de treino: ${profile.training_time}
+${lastAnalysis ? \`Última análise: \${lastAnalysis.slice(0, 500)}\` : ''}\`
 
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
