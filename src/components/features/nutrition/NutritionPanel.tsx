@@ -1,6 +1,6 @@
 // src/components/features/nutrition/NutritionPanel.tsx
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile, Meal } from '@/types/supabase'
@@ -35,6 +35,131 @@ function MacroBar({ label, current, target, color, unit = 'g' }: { label: string
     </div>
   )
 }
+
+// ── Nutrition Plan Interactive View ──────────────────────────
+interface FoodItem { name: string; quantity: string; swapOpen: boolean; swapReason: string; swapResult: string; swapLoading: boolean }
+interface MealSection { title: string; foods: FoodItem[] }
+
+function parsePlan(plan: string): MealSection[] {
+  const sections: MealSection[] = []
+  if (!plan) return sections
+  let current: MealSection | null = null
+  for (const line of plan.split('\n')) {
+    const t = line.trim()
+    if (!t) continue
+    const clean = t.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim()
+    // Section header: all caps or bold or starts with emoji-like meal name
+    const isMealHeader = /^(café|almoço|jantar|lanche|pré-treino|pós-treino|desjejum|refeição)/i.test(clean) ||
+      (clean.length < 40 && /^[A-ZÁÉÍÓÚÂÊÎÔÛÃÕ]/.test(clean) && !clean.includes(':') && !clean.match(/\d+[x×]/))
+    if (isMealHeader && (t.startsWith('#') || t.startsWith('**') || sections.length === 0 || /^(café|almoço|jantar|lanche)/i.test(clean))) {
+      current = { title: clean, foods: [] }
+      sections.push(current)
+      continue
+    }
+    if (!current) continue
+    // Food item line
+    if (/^[-*•]/.test(t) || /^\d+[.)]/.test(t) || (clean.length > 3 && clean.length < 80 && /[a-zA-ZÀ-ú]{3}/.test(clean))) {
+      const foodName = clean.replace(/^[-*•\d.)\s]+/, '').trim()
+      if (foodName.length > 2) {
+        // Extract quantity if present (e.g. "150g", "2 colheres", "1 unidade")
+        const qtyMatch = foodName.match(/(\d+\s*(?:g|ml|kg|l|colheres?|xícaras?|unidades?|fatias?|porções?|ovos?|copos?)?)/i)
+        const qty = qtyMatch ? qtyMatch[0] : ''
+        current.foods.push({ name: foodName, quantity: qty, swapOpen: false, swapReason: '', swapResult: '', swapLoading: false })
+      }
+    }
+  }
+  return sections.filter(s => s.foods.length > 0)
+}
+
+function NutritionPlanView({ plan, profile }: { plan: string | null; profile: any }) {
+  const [sections, setSections] = React.useState<MealSection[]>(() => parsePlan(plan || ''))
+  React.useEffect(() => { setSections(parsePlan(plan || '')) }, [plan])
+
+  const updateFood = (si: number, fi: number, updates: Partial<FoodItem>) => {
+    setSections(prev => prev.map((s, i) => i !== si ? s : {
+      ...s, foods: s.foods.map((f, j) => j !== fi ? f : { ...f, ...updates })
+    }))
+  }
+
+  const requestSwap = async (si: number, fi: number) => {
+    const food = sections[si]?.foods[fi]
+    if (!food) return
+    updateFood(si, fi, { swapLoading: true, swapResult: '' })
+    try {
+      const res = await fetch('/api/ai/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: `Preciso de 2-3 alternativas para "${food.name}" no plano alimentar. Motivo: ${food.swapReason || 'não tenho esse alimento'}. Dê opções com quantidades equivalentes em proteína e calorias.` }],
+          profile
+        })
+      })
+      const data = await res.json()
+      updateFood(si, fi, { swapResult: data.reply, swapLoading: false })
+    } catch { updateFood(si, fi, { swapLoading: false }) }
+  }
+
+  if (!plan) return (
+    <div className="text-center py-20">
+      <p className="text-[#555] mb-2">Nenhum plano nutricional gerado</p>
+      <p className="text-[#333] text-sm">Faça sua análise corporal primeiro</p>
+    </div>
+  )
+
+  if (sections.length === 0) return (
+    <div className="max-w-3xl rounded-2xl bg-[#111] border border-[#1C1C1C] p-8 prose-dark">
+      <Markdown>{plan}</Markdown>
+    </div>
+  )
+
+  return (
+    <div className="max-w-3xl space-y-4">
+      {sections.map((section, si) => (
+        <div key={si} className="rounded-2xl bg-[#111] border border-[#1C1C1C] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#1C1C1C]">
+            <p className="font-black uppercase tracking-widest text-sm text-[#E8002D]" style={{ fontFamily: 'var(--font-display)' }}>{section.title}</p>
+          </div>
+          <div className="divide-y divide-[#0D0D0D]">
+            {section.foods.map((food, fi) => (
+              <div key={fi}>
+                <div className="px-6 py-3 flex items-center justify-between group">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-white text-sm">{food.name}</span>
+                  </div>
+                  <button onClick={() => updateFood(si, fi, { swapOpen: !food.swapOpen, swapResult: '', swapReason: '' })}
+                    className={`ml-4 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-all flex-shrink-0 ${food.swapOpen ? 'text-[#F59E0B] border-[#F59E0B]/30 bg-[#F59E0B]/5' : 'text-[#444] border-[#1C1C1C] hover:border-[#333] hover:text-[#999]'}`}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M7 16V4m0 0L3 8m4-4 4 4"/><path d="M17 8v12m0 0 4-4m-4 4-4-4"/></svg>
+                    Trocar
+                  </button>
+                </div>
+                {food.swapOpen && (
+                  <div className="px-6 pb-4 bg-[#0A0A0A]">
+                    {!food.swapResult ? (
+                      <div className="space-y-2">
+                        <textarea value={food.swapReason} onChange={e => updateFood(si, fi, { swapReason: e.target.value })}
+                          placeholder="Por que quer trocar? (ex: não tenho, não gosto, sou alérgico...)"
+                          rows={2} className="w-full bg-[#111] border border-[#1C1C1C] rounded-xl px-4 py-3 text-white text-xs placeholder-[#333] resize-none focus:outline-none focus:border-[#F59E0B]/40" />
+                        <button onClick={() => requestSwap(si, fi)} disabled={food.swapLoading}
+                          className="w-full py-2 rounded-xl bg-[#F59E0B]/10 border border-[#F59E0B]/30 text-[#F59E0B] text-xs font-bold hover:bg-[#F59E0B]/20 transition-all disabled:opacity-40">
+                          {food.swapLoading ? 'Buscando alternativas...' : 'Pedir alternativa ao coach'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <div className="prose-dark text-xs mb-2"><Markdown>{food.swapResult}</Markdown></div>
+                        <button onClick={() => updateFood(si, fi, { swapResult: '', swapReason: '' })} className="text-xs text-[#444] hover:text-[#999]">← Perguntar novamente</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 
 interface NutritionPanelProps { profile: Profile; onProfileUpdate: (data: Partial<Profile>) => void }
 
@@ -283,17 +408,7 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
         )}
 
         {activeView === 'plan' && (
-          <div className="max-w-3xl">
-            {profile.nutrition_plan ? (
-              <div className="rounded-2xl bg-[#111] border border-[#1C1C1C] p-8 prose-dark">
-                <Markdown>{profile.nutrition_plan}</Markdown>
-              </div>
-            ) : (
-              <div className="text-center py-20">
-                <p className="text-[#555] mb-4">Gere um plano de treino primeiro para obter o plano nutricional</p>
-              </div>
-            )}
-          </div>
+          <NutritionPlanView plan={profile.nutrition_plan} profile={profile} />
         )}
       </div>
     </div>

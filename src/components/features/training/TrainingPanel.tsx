@@ -29,24 +29,25 @@ function parseTrainingPlan(plan: string): Record<string, string[]> {
   const result: Record<string, string[]> = {}
   if (!plan) return result
 
+  const dayKeys = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
   const dayPatterns = [
-    { regex: /segunda[\-\s]*feira?[:|\s]/i, key: 'Segunda' },
-    { regex: /terça[\-\s]*feira?[:|\s]/i, key: 'Terça' },
-    { regex: /quarta[\-\s]*feira?[:|\s]/i, key: 'Quarta' },
-    { regex: /quinta[\-\s]*feira?[:|\s]/i, key: 'Quinta' },
-    { regex: /sexta[\-\s]*feira?[:|\s]/i, key: 'Sexta' },
-    { regex: /sábado[:|\s]/i, key: 'Sábado' },
-    { regex: /sabado[:|\s]/i, key: 'Sábado' },
-    { regex: /domingo[:|\s]/i, key: 'Domingo' },
-    { regex: /monday[:|\s]/i, key: 'Segunda' },
-    { regex: /tuesday[:|\s]/i, key: 'Terça' },
-    { regex: /wednesday[:|\s]/i, key: 'Quarta' },
-    { regex: /thursday[:|\s]/i, key: 'Quinta' },
-    { regex: /friday[:|\s]/i, key: 'Sexta' },
-    { regex: /saturday[:|\s]/i, key: 'Sábado' },
-    { regex: /sunday[:|\s]/i, key: 'Domingo' },
+    { regex: /segunda[\-\s]*feira/i, key: 'Segunda' },
+    { regex: /ter[cç]a[\-\s]*feira/i, key: 'Terça' },
+    { regex: /quarta[\-\s]*feira/i, key: 'Quarta' },
+    { regex: /quinta[\-\s]*feira/i, key: 'Quinta' },
+    { regex: /sexta[\-\s]*feira/i, key: 'Sexta' },
+    { regex: /s[aá]bado/i, key: 'Sábado' },
+    { regex: /domingo/i, key: 'Domingo' },
+    { regex: /monday/i, key: 'Segunda' },
+    { regex: /tuesday/i, key: 'Terça' },
+    { regex: /wednesday/i, key: 'Quarta' },
+    { regex: /thursday/i, key: 'Quinta' },
+    { regex: /friday/i, key: 'Sexta' },
+    { regex: /saturday/i, key: 'Sábado' },
+    { regex: /sunday/i, key: 'Domingo' },
   ]
 
+  const skipWords = ['descanso', 'rest', 'recuperação', 'active recovery', 'plano', 'protocolo', 'semana:', 'foco:', 'objetivo:', 'notas:', 'obs:', 'dica:', 'importante:']
   const lines = plan.split('\n')
   let currentDay: string | null = null
 
@@ -54,10 +55,13 @@ function parseTrainingPlan(plan: string): Record<string, string[]> {
     const trimmed = line.trim()
     if (!trimmed) continue
 
-    // Check if line is a day header
+    // Skip pure markdown headers that are day names
+    const cleanLine = trimmed.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim()
+
+    // Check if this line declares a day
     let foundDay = false
     for (const { regex, key } of dayPatterns) {
-      if (regex.test(trimmed) && (trimmed.startsWith('#') || trimmed.length < 60)) {
+      if (regex.test(cleanLine) && cleanLine.length < 80) {
         currentDay = key
         if (!result[currentDay]) result[currentDay] = []
         foundDay = true
@@ -65,52 +69,40 @@ function parseTrainingPlan(plan: string): Record<string, string[]> {
       }
     }
     if (foundDay) continue
+    if (!currentDay) continue
 
-    // Check if new day section started (stop adding to current day)
-    const isNewSection = trimmed.startsWith('##') || trimmed.startsWith('# ')
-    if (isNewSection && currentDay) {
-      // could be a new day header we didn't catch
-    }
+    // Skip non-exercise lines
+    if (/^#{1,6}\s/.test(trimmed)) continue
+    const lower = cleanLine.toLowerCase()
+    if (skipWords.some(w => lower === w || lower.startsWith(w))) continue
+    if (cleanLine.length < 4 || cleanLine.length > 100) continue
+    if (!/[a-zA-ZÀ-ú]{3,}/.test(cleanLine)) continue
 
-    // Parse exercise lines — skip markdown headers and non-exercise text
-    if (currentDay && result[currentDay] !== undefined) {
-      // SKIP: markdown headers (#, ##, ###, ####)
-      if (/^#{1,6}\s/.test(trimmed)) continue
-      // SKIP: bold section titles (**text:**)
-      if (/^\*\*[^*]+\*\*:?\s*$/.test(trimmed)) continue
-      // SKIP: lines that are clearly not exercises
-      const skipWords = ['descanso', 'rest', 'recuperação', 'active recovery', 'plano de', 'protocolo', 'semana', 'foco:', 'objetivo:', 'treino de', 'cardio liss', 'notas:', 'obs:', 'importante:', 'dica:']
-      const lowerTrimmed = trimmed.toLowerCase()
-      if (skipWords.some(w => lowerTrimmed === w || lowerTrimmed.startsWith(w + ' ') || lowerTrimmed.startsWith(w + ':') )) continue
+    // Accept lines that have sets info (4x8, 3x10-12) OR look like exercise names
+    const hasSets = /\d+\s*[x×]\s*\d+/.test(cleanLine)
+    const hasBullet = /^[-*•]/.test(trimmed)
+    const hasNumber = /^\d+[.)]/.test(trimmed)
+    // Also accept plain text lines under a day heading if they look like exercises
+    const looksLikeExercise = /^[A-ZÀ-Ú][a-záéíóúâêîôûãõàèìòùç]/.test(cleanLine) && !cleanLine.endsWith(':')
 
-      // Exercise line: must start with -, *, •, number, or be a known exercise pattern
-      const exMatch = trimmed.match(/^[-*•\d.)\s]+(.+?)(\s*[:—\-]\s*\d.*)?$/)
-      if (exMatch) {
-        const name = exMatch[1].replace(/\*\*/g, '').trim()
-        // Must have sets info (xN) OR be preceded by a dash/bullet to count as exercise
-        const hasSets = /\d+[x×]\d+/.test(trimmed)
-        const hasBullet = /^[-*•]/.test(trimmed) || /^\d+[.)]\s/.test(trimmed)
-        if (
-          name.length > 3 &&
-          name.length < 70 &&
-          (hasSets || hasBullet) &&
-          /[a-zA-ZÀ-ú]{3,}/.test(name) &&
-          result[currentDay].length < 10
-        ) {
-          const setsInfo = trimmed.match(/(\d+)[x×](\d+[-–]\d+|\d+)/)
-          const exerciseName = setsInfo
-            ? `${name.replace(/\s*\d+[x×].*/,'').trim()} — ${setsInfo[0]}`
-            : name
-          if (!result[currentDay].includes(exerciseName)) {
-            result[currentDay].push(exerciseName)
-          }
-        }
+    if (hasSets || hasBullet || hasNumber || looksLikeExercise) {
+      // Clean the exercise name
+      let name = cleanLine.replace(/^[-*•\d.)\s]+/, '').trim()
+      // Extract sets portion
+      const setsMatch = cleanLine.match(/(\d+)\s*[x×]\s*(\d+[-–]?\d*)/)
+      if (setsMatch) {
+        const baseName = name.replace(/[:\-–]?\s*\d+\s*[x×]\s*\d+[-–]?\d*.*$/, '').trim()
+        name = baseName + ' — ' + setsMatch[0].replace(/\s/g, '')
+      }
+      if (name.length > 3 && !result[currentDay].includes(name) && result[currentDay].length < 10) {
+        result[currentDay].push(name)
       }
     }
   }
 
   return result
 }
+
 
 function parseWeekSummary(plan: string): Record<string, string> {
   const result: Record<string, string> = {}
