@@ -29,6 +29,8 @@ export interface Database {
           financial_condition: string | null
           wants_supplements: boolean
           personality_mode: string
+          health_conditions: string | null
+          onboarding_done: boolean
           training_plan: string | null
           nutrition_plan: string | null
           last_analysis: string | null

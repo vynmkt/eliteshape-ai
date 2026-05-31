@@ -14,6 +14,7 @@ import ProfilePanel from '@/components/features/profile/ProfilePanel'
 import RankingPanel from '@/components/features/ranking/RankingPanel'
 import CommunityPanel from '@/components/features/community/CommunityPanel'
 import AdminPanel from '@/components/features/admin/AdminPanel'
+import OnboardingQuiz from '@/components/features/onboarding/OnboardingQuiz'
 
 // ============================================================
 // SVG NAV ICONS
@@ -123,6 +124,8 @@ export default function AppShell({ initialProfile }: AppShellProps) {
   const router = useRouter()
   const supabase = createClient()
 
+  const showOnboarding = profile && !(profile as any).onboarding_done && !profile.age
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/auth')
@@ -141,6 +144,10 @@ export default function AppShell({ initialProfile }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-[#080808] flex">
+      {/* Onboarding Quiz */}
+      {showOnboarding && profile && (
+        <OnboardingQuiz profile={profile} onComplete={handleProfileUpdate} />
+      )}
       {/* ====================================================
           SIDEBAR
       ==================================================== */}

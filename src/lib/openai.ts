@@ -244,29 +244,26 @@ ${lastAnalysis ? `Last AI analysis summary: ${lastAnalysis.slice(0, 500)}` : ''}
 export async function recognizeMeal(params: {
   description: string
   language: string
+  imageBase64?: string
 }): Promise<MacroResult> {
-  const { description, language } = params
+  const { description, language, imageBase64 } = params
   const lang = language === 'pt' ? 'pt-BR' : 'en-US'
-
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: `You are a precision nutritionist. Given a food description, return accurate macros in JSON. Language: ${lang}`
-      },
-      {
-        role: 'user',
-        content: `Food: "${description}"
+  const userContent: any[] = []
+  if (imageBase64) {
+    userContent.push({ type: 'image_url', image_url: { url: `data:image/jpeg;base64,${imageBase64}`, detail: 'low' } })
+  }
+  userContent.push({ type: 'text', text: `${imageBase64 ? 'Analyze this meal photo.' : `Food: "\"`}
 Return JSON: { "name": "Food Name", "calories": 350, "protein": 28, "carbs": 42, "fat": 8, "meal_type": "lunch" }
-Be precise. Use standard portions if quantity not specified.`
-      }
+Be precise. Language: ${lang}` })
+  const response = await openai.chat.completions.create({
+    model: imageBase64 ? 'gpt-4o' : 'gpt-4o-mini',
+    messages: [
+      { role: 'system', content: `You are a precision nutritionist. Return accurate macros in JSON only. Language: ${lang}` },
+      { role: 'user', content: userContent }
     ],
-    max_tokens: 200,
-    temperature: 0.2,
+    max_tokens: 200, temperature: 0.2,
     response_format: { type: 'json_object' },
   })
-
   return JSON.parse(response.choices[0].message.content ?? '{}') as MacroResult
 }
 
