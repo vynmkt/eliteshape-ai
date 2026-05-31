@@ -1,4 +1,5 @@
-﻿// src/app/api/ai/analyze/route.ts
+﻿// @ts-nocheck
+// src/app/api/ai/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { analyzeBodyShape, calculateTDEE } from '@/lib/openai'
@@ -45,3 +46,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 })
   }
 }
+

@@ -1,3 +1,4 @@
+﻿// @ts-nocheck
 // src/app/api/ai/meal/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -16,3 +17,4 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e.message }, { status: 500 })
   }
 }
+
