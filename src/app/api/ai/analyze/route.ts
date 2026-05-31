@@ -1,4 +1,4 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 // src/app/api/ai/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma imagem enviada' }, { status: 400 })
     }
 
+    // Check premium for multiple images
     const { data: profileData } = await supabase.from('profiles').select('is_premium').eq('id', user.id).single()
     const isPremium = (profileData as any)?.is_premium
     if (!isPremium && images.length > 1) {
@@ -46,4 +47,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: e.message || 'Erro interno' }, { status: 500 })
   }
 }
-

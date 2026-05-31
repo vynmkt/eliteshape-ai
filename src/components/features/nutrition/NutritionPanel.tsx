@@ -144,12 +144,13 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
             Preferências
           </button>
           <div className="flex gap-1 bg-[#111] border border-[#1C1C1C] rounded-lg p-1">
-          {(['log', 'plan'] as const).map(v => (
-            <button key={v} onClick={() => setActiveView(v)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${v === activeView ? 'bg-[#E8002D] text-white' : 'text-[#666] hover:text-[#999]'}`}>
-              {v === 'log' ? 'Diário' : 'Plano IA'}
-            </button>
-          ))}
+            {(['log', 'plan'] as const).map(v => (
+              <button key={v} onClick={() => setActiveView(v)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${v === activeView ? 'bg-[#E8002D] text-white' : 'text-[#666] hover:text-[#999]'}`}>
+                {v === 'log' ? 'Diário' : 'Plano IA'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
