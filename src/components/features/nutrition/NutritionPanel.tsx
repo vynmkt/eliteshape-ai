@@ -1,4 +1,4 @@
-// src/components/features/nutrition/NutritionPanel.tsx
+﻿// src/components/features/nutrition/NutritionPanel.tsx
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -18,7 +18,7 @@ const IconText = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="non
 
 const MACRO_COLORS = { protein: '#E8002D', carbs: '#F59E0B', fat: '#6366F1' }
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack', 'other']
-const MEAL_LABELS: Record<string, string> = { breakfast: 'Café', lunch: 'Almoço', dinner: 'Jantar', snack: 'Lanche', other: 'Outro' }
+const MEAL_LABELS: Record<string, string> = { breakfast: 'CafÃ©', lunch: 'AlmoÃ§o', dinner: 'Jantar', snack: 'Lanche', other: 'Outro' }
 const WATER_OPTIONS = [150, 250, 350, 500]
 
 function MacroBar({ label, current, target, color, unit = 'g' }: { label: string; current: number; target: number; color: string; unit?: string }) {
@@ -84,7 +84,7 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
       const body: any = { mealType, language: profile.language }
       if (inputMode === 'photo' && photoPreview) {
         body.imageBase64 = photoPreview.split(',')[1]
-        body.description = foodInput || 'Analise esta refeição pela foto'
+        body.description = foodInput || 'Analise esta refeiÃ§Ã£o pela foto'
       } else {
         body.description = foodInput
       }
@@ -102,8 +102,8 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
       setPhotoPreview(null)
       setInputMode('text')
       await loadData()
-      toast.success(`${data.name || 'Refeição'} registrada!`)
-    } catch { toast.error('Erro ao registrar refeição') } finally { setAddingMeal(false) }
+      toast.success(`${data.name || 'RefeiÃ§Ã£o'} registrada!`)
+    } catch { toast.error('Erro ao registrar refeiÃ§Ã£o') } finally { setAddingMeal(false) }
   }
 
   const addWater = async (ml: number) => {
@@ -129,25 +129,25 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
         <NutritionQuiz profile={profile} onComplete={(data) => {
           onProfileUpdate(data)
           setShowQuiz(false)
-          toast.success('Preferências salvas!')
+          toast.success('PreferÃªncias salvas!')
         }} />
       )}
       <div className="px-8 py-6 border-b border-[#1C1C1C] flex items-center justify-between">
         <div>
-          <h1 className="font-display text-3xl font-black text-white uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>NUTRIÇÃO</h1>
+          <h1 className="font-display text-3xl font-black text-white uppercase tracking-wide" style={{ fontFamily: 'var(--font-display)' }}>NUTRIÃ‡ÃƒO</h1>
           <p className="text-[#555] text-sm mt-0.5">Rastreamento de macros com IA</p>
         </div>
         <div className="flex items-center gap-3">
           <button onClick={() => setShowQuiz(true)}
             className="flex items-center gap-2 text-xs text-[#555] border border-[#1C1C1C] hover:border-[#F59E0B]/40 hover:text-[#F59E0B] rounded-lg px-3 py-2 transition-all">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
-            Preferências
+            PreferÃªncias
           </button>
           <div className="flex gap-1 bg-[#111] border border-[#1C1C1C] rounded-lg p-1">
           {(['log', 'plan'] as const).map(v => (
             <button key={v} onClick={() => setActiveView(v)}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${v === activeView ? 'bg-[#E8002D] text-white' : 'text-[#666] hover:text-[#999]'}`}>
-              {v === 'log' ? 'Diário' : 'Plano IA'}
+              {v === 'log' ? 'DiÃ¡rio' : 'Plano IA'}
             </button>
           ))}
         </div>
@@ -161,7 +161,7 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
               {/* Add meal card */}
               <div className="rounded-2xl bg-[#111] border border-[#1C1C1C] p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs font-black uppercase tracking-widest text-[#E8002D]" style={{ fontFamily: 'var(--font-display)' }}>REGISTRAR REFEIÇÃO</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-[#E8002D]" style={{ fontFamily: 'var(--font-display)' }}>REGISTRAR REFEIÃ‡ÃƒO</p>
                   <div className="flex gap-1 bg-[#0A0A0A] border border-[#1C1C1C] rounded-lg p-1">
                     <button onClick={() => { setInputMode('text'); setPhotoPreview(null) }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${inputMode === 'text' ? 'bg-[#E8002D] text-white' : 'text-[#555] hover:text-[#999]'}`}>
@@ -190,7 +190,7 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
                   <div className="mb-4 relative">
                     <img src={photoPreview} alt="preview" className="rounded-xl w-full max-h-48 object-cover" />
                     <button onClick={() => { setPhotoPreview(null); setInputMode('text') }}
-                      className="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center text-white text-xs hover:bg-black">✕</button>
+                      className="absolute top-2 right-2 w-7 h-7 bg-black/70 rounded-full flex items-center justify-center text-white text-xs hover:bg-black">âœ•</button>
                   </div>
                 )}
 
@@ -200,7 +200,7 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
                     value={foodInput}
                     onChange={e => setFoodInput(e.target.value)}
                     placeholder={inputMode === 'photo'
-                      ? 'Adicione uma descrição (opcional)...'
+                      ? 'Adicione uma descriÃ§Ã£o (opcional)...'
                       : 'Descreva o que comeu... Ex: 150g frango grelhado com arroz integral e salada'}
                     rows={3}
                     className="w-full bg-[#0A0A0A] border border-[#2A2A2A] rounded-xl px-4 py-3 text-white text-sm placeholder-[#444] resize-none focus:outline-none focus:border-[#E8002D]/50 transition-colors"
@@ -211,16 +211,16 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
 
                 <button onClick={addMeal} disabled={addingMeal || (!foodInput.trim() && !photoPreview)}
                   className="btn btn-primary w-full disabled:opacity-40">
-                  {addingMeal ? <><IconLoader />Analisando com IA...</> : <><IconPlus />Registrar Refeição</>}
+                  {addingMeal ? <><IconLoader />Analisando com IA...</> : <><IconPlus />Registrar RefeiÃ§Ã£o</>}
                 </button>
               </div>
 
               {/* Meals list */}
               <div className="space-y-3">
-                <p className="text-xs font-black uppercase tracking-widest text-[#444]" style={{ fontFamily: 'var(--font-display)' }}>HOJE — {meals.length} REFEIÇÃO{meals.length !== 1 ? 'ÕES' : ''}</p>
+                <p className="text-xs font-black uppercase tracking-widest text-[#444]" style={{ fontFamily: 'var(--font-display)' }}>HOJE â€” {meals.length} REFEIÃ‡ÃƒO{meals.length !== 1 ? 'Ã•ES' : ''}</p>
                 {meals.length === 0 ? (
                   <div className="rounded-2xl bg-[#111] border border-[#1C1C1C] p-8 text-center">
-                    <p className="text-[#555] text-sm">Nenhuma refeição registrada hoje</p>
+                    <p className="text-[#555] text-sm">Nenhuma refeiÃ§Ã£o registrada hoje</p>
                   </div>
                 ) : meals.map(meal => (
                   <motion.div key={meal.id} initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
@@ -253,7 +253,7 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
                   <p className="text-[#555] text-sm">de {formatNumber(targets.calories)} kcal</p>
                 </div>
                 <div className="space-y-4">
-                  <MacroBar label="Proteína" current={totals.protein} target={targets.protein} color={MACRO_COLORS.protein} />
+                  <MacroBar label="ProteÃ­na" current={totals.protein} target={targets.protein} color={MACRO_COLORS.protein} />
                   <MacroBar label="Carboidratos" current={totals.carbs} target={targets.carbs} color={MACRO_COLORS.carbs} />
                   <MacroBar label="Gordura" current={totals.fat} target={targets.fat} color={MACRO_COLORS.fat} />
                 </div>
@@ -262,7 +262,7 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
               {/* Water */}
               <div className="rounded-2xl bg-[#111] border border-[#1C1C1C] p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <p className="text-xs font-black uppercase tracking-widest text-[#E8002D]" style={{ fontFamily: 'var(--font-display)' }}>HIDRATAÇÃO</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-[#E8002D]" style={{ fontFamily: 'var(--font-display)' }}>HIDRATAÃ‡ÃƒO</p>
                   <div className="flex items-center gap-1 text-[#4DA6FF]"><IconWater /><span className="text-sm font-bold">{(waterMl / 1000).toFixed(1)}L</span></div>
                 </div>
                 <div className="progress-track mb-4">
@@ -298,3 +298,4 @@ export default function NutritionPanel({ profile, onProfileUpdate }: NutritionPa
     </div>
   )
 }
+
