@@ -31,6 +31,14 @@ export interface Database {
           personality_mode: string
           health_conditions: string | null
           onboarding_done: boolean
+          nutrition_quiz_done: boolean | null
+          cooking_skill: string | null
+          meal_prep_time: string | null
+          favorite_proteins: string[] | null
+          favorite_carbs: string[] | null
+          food_intolerances: string[] | null
+          disliked_foods: string | null
+          meals_per_day: string | null
           training_plan: string | null
           nutrition_plan: string | null
           last_analysis: string | null

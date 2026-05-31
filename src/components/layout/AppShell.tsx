@@ -15,10 +15,17 @@ import RankingPanel from '@/components/features/ranking/RankingPanel'
 import CommunityPanel from '@/components/features/community/CommunityPanel'
 import AdminPanel from '@/components/features/admin/AdminPanel'
 import OnboardingQuiz from '@/components/features/onboarding/OnboardingQuiz'
+import ChatPanel from '@/components/features/chat/ChatPanel'
 
 // ============================================================
 // SVG NAV ICONS
 // ============================================================
+const IconChat = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+)
+
 const IconBrain = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
@@ -95,6 +102,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'coach', label: 'Análise Corporal', Icon: IconBrain },
+  { id: 'chat', label: 'Chat com Coach', Icon: IconChat },
   { id: 'training', label: 'Treino', Icon: IconDumbbell },
   { id: 'nutrition', label: 'Nutrição', Icon: IconUtensils },
   { id: 'ranking', label: 'Ranking Elite', Icon: IconTrophy },
@@ -105,6 +113,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const PANELS: Record<string, React.ComponentType<any>> = {
   coach: CoachPanel,
+  chat: ChatPanel,
   training: TrainingPanel,
   nutrition: NutritionPanel,
   ranking: RankingPanel,

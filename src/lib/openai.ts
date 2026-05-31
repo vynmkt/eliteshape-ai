@@ -225,27 +225,32 @@ export async function chatWithCoach(params: {
   profile: Record<string, any>
   language: string
   lastAnalysis?: string
+  analysisContext?: string
+  nutritionContext?: string
 }): Promise<string> {
-  const { messages, profile, language, lastAnalysis } = params
+  const { messages, profile, language, lastAnalysis, analysisContext, nutritionContext } = params
   const lang = language === 'pt' ? 'pt-BR' : 'en-US'
 
   const chatPersonality: Record<string, string> = {
-    motivational: 'Seja EXTREMAMENTE motivador. Elogie o esforço. Use energia alta. Finalize com algo que motive a ação imediata.',
-    technical: 'Seja preciso e científico. Cite fisiologia quando relevante. Explique o porquê.',
-    raiz: 'Seja direto e prático. Sem enrolação. Fale o que precisa ser feito sem teoria desnecessária.',
+    motivational: 'Use linguagem simples e motivadora. Elogie o esforço. Seja acessível. Finalize com uma ação concreta.',
+    technical: 'Seja preciso mas acessível. Explique de forma simples. Use dados da análise.',
+    raiz: 'Direto ao ponto. Linguagem simples. Sem rodeios.',
   }
   const chatTone = chatPersonality[(profile.personality_mode as string) || 'motivational'] || chatPersonality.motivational
   const systemPrompt = `${ELITE_COACH_PERSONA}
-Idioma: ${lang}. RESPONDA SEMPRE EM ${lang}. NUNCA use inglês se o idioma for pt-BR.
+IDIOMA: ${lang}. SEMPRE responda em português do Brasil. NUNCA use inglês.
 ${chatTone}
-Comunicação: máximo 2 parágrafos curtos por resposta. Foco em ação prática.
-IMPORTANTE: Você é um coach de FITNESS E NUTRIÇÃO. Recuse perguntas fora desse contexto.
+REGRAS: linguagem simples e acessível. Máx 3 parágrafos curtos. Só fale de fitness/nutrição.
+Use os dados do atleta para respostas PERSONALIZADAS, nunca genéricas.
 
-Contexto do atleta:
-- Objetivo: ${profile.objective} | Nível: ${profile.training_level} | Peso: ${profile.weight}kg
-- Horário de treino: ${profile.training_time}
-${lastAnalysis ? \`Última análise: \${lastAnalysis.slice(0, 500)}\` : ''}\`
-
+PERFIL:
+- Nome: ${profile.name || 'Atleta'} | Objetivo: ${profile.objective} | Nível: ${profile.training_level}
+- Peso: ${profile.weight}kg | Altura: ${profile.height}cm | Idade: ${profile.age} anos
+- Dieta: ${profile.current_diet} | Saúde: ${profile.health_conditions || 'sem restrições'}
+${analysisContext ? `\nANÁLISE CORPORAL:\n${analysisContext}` : ''}
+${nutritionContext ? `\nMETAS NUTRICIONAIS:\n${nutritionContext}` : ''}
+${profile.training_plan ? `\nPLANO ATUAL:\n${profile.training_plan.slice(0, 600)}` : ''}
+${lastAnalysis && !analysisContext ? `\nANÁLISE ANTERIOR: ${lastAnalysis.slice(0, 500)}` : ''}\`
   const response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
@@ -314,3 +319,5 @@ export function calculateTDEE(profile: {
 
   return Math.round(bmr * (multipliers[activity_level] ?? 1.55))
 }
+
+// Note: nutrition quiz fields are stored in profiles table via supabase.update()
