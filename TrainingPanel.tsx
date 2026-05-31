@@ -516,6 +516,5 @@ export default function TrainingPanel({ profile, onProfileUpdate }: TrainingPane
         </div>
       </div>
     </div>
-    </div>
   )
 }
