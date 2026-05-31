@@ -105,8 +105,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'chat', label: 'Chat com Coach', Icon: IconChat },
   { id: 'training', label: 'Treino', Icon: IconDumbbell },
   { id: 'nutrition', label: 'Nutrição', Icon: IconUtensils },
-  { id: 'ranking', label: 'Ranking Elite', Icon: IconTrophy },
-  { id: 'community', label: 'Comunidade', Icon: IconUsers },
   { id: 'profile', label: 'Perfil', Icon: IconUser },
   { id: 'admin', label: 'Admin', Icon: IconShield, adminOnly: true },
 ]

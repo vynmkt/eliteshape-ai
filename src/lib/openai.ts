@@ -114,46 +114,62 @@ Atleta/Athlete Data:
 Be savage but educational. Mix humor with real actionable advice. 3-5 sentences max for roast.
   const userPrompt = isRoastMode
     ? `${profileContext}
-Roast this physique in ${lang}. Be savage, funny, but educational. Then give 3 priority actions.
-Return JSON: { "roast": "...", "score": 0-10, "priority_actions": ["...", "...", "..."], "fat_percentage_estimate": 0, "training_plan": "...", "nutrition_plan": "..." }`
+Faça um roast BRUTAL e engraçado desse físico em ${lang}. Seja ácido mas educativo. Máx 4 frases no roast.
+Retorne JSON: { "roast": "...", "score": 0-10, "priority_actions": ["...", "...", "..."], "fat_percentage_estimate": 0, "training_plan": "...", "nutrition_plan": "..." }`
     : `${profileContext}
 
-Analyze these physique images and return a detailed JSON plan. Be extremely specific and scientific.
+VOCÊ ESTÁ VENDO UMA FOTO REAL DE UMA PESSOA REAL. Analise o físico COM PRECISÃO CIRÚRGICA.
 
-Return ONLY valid JSON with this exact structure:
+REGRAS OBRIGATÓRIAS:
+1. Descreva EXATAMENTE o que você vê na imagem — não use respostas genéricas
+2. Se a pessoa está acima do peso, diga claramente
+3. Se a pessoa tem pouca massa muscular, diga claramente  
+4. Se a pessoa está definida, reconheça isso
+5. Cada pessoa é ÚNICA — pontos fortes e fracos devem ser ESPECÍFICOS para o físico desta foto
+6. O score (1-10) deve refletir a CONDIÇÃO REAL, não ser sempre 7
+7. A % de gordura deve ser ESTIMADA com base no que você vê, não calculada por fórmula
+8. NUNCA use inglês — TODAS as strings em ${lang}
+9. O plano de treino deve ter os dias em PORTUGUÊS (Segunda-feira, Terça-feira, etc)
+10. Os exercícios devem ser adequados ao nível ${profile.training_level} e objetivo ${profile.objective}
+
+Exemplos do que descrever em strong_points e weak_points:
+- CORRETO: "Ombros largos com boa inserção do deltóide lateral", "Excesso de gordura abdominal visível"
+- ERRADO: "Broad shoulders" (inglês), "Good muscle development" (genérico)
+
+Retorne APENAS JSON válido com esta estrutura exata:
 {
-  "overall_score": 7,
-  "fat_percentage_estimate": 18.5,
-  "muscle_mass": "moderate",
-  "strong_points": ["Broad shoulders", "Good quad sweep"],
-  "weak_points": ["Lagging hamstrings", "Thin calves"],
-  "priority_muscles": ["Hamstrings", "Calves", "Rear delts"],
-  "training_focus": "Hypertrophy with emphasis on posterior chain",
-  "diet_approach": "Moderate caloric deficit with high protein",
-  "motivational_message": "...",
-  "estimated_timeframe": "12-16 weeks to visible transformation",
+  "overall_score": <número 1-10 baseado no físico real das fotos>,
+  "fat_percentage_estimate": <% real estimado pelo que você vê nas fotos>,
+  "muscle_mass": <"low" | "moderate" | "high" | "very_high" baseado no físico real>,
+  "strong_points": ["<ponto forte REAL observado nas fotos em pt-BR>", "<outro ponto forte real>"],
+  "weak_points": ["<ponto fraco REAL observado em pt-BR>", "<outro ponto fraco real>"],
+  "priority_muscles": ["<músculo prioritário em pt-BR>", "<outro>", "<outro>"],
+  "training_focus": "<foco específico baseado no físico real e objetivo: ${profile.objective}>",
+  "diet_approach": "<abordagem nutricional específica em pt-BR>",
+  "motivational_message": "<mensagem motivacional personalizada em pt-BR no estilo ${profile.personality_mode || 'motivational'}>",
+  "estimated_timeframe": "<prazo realista em pt-BR>",
   "week_protocol": {
-    "Monday": "Chest + Triceps — 4x10-12",
-    "Tuesday": "Back + Biceps — 4x10-12",
-    "Wednesday": "Active Recovery / LISS Cardio 30min",
-    "Thursday": "Legs — Quad focus — 5x10-15",
-    "Friday": "Shoulders + Rear Delts — 4x12-15",
-    "Saturday": "Legs — Hamstring/Glute focus — 4x10-15",
-    "Sunday": "Rest"
+    "Segunda": "<treino específico para o físico desta pessoa>",
+    "Terça": "<treino>",
+    "Quarta": "<treino ou recuperação>",
+    "Quinta": "<treino>",
+    "Sexta": "<treino>",
+    "Sábado": "<treino ou recuperação>",
+    "Domingo": "<descanso>"
   },
   "nutrition_schedule": {
-    "target_calories": ${tdee - 400},
+    "target_calories": ${tdee - 300},
     "target_protein": ${Math.round(profile.weight * 2.2)},
-    "target_carbs": ${Math.round((tdee - 400 - profile.weight * 2.2 * 4 - profile.weight * 0.8 * 9) / 4)},
-    "target_fat": ${Math.round(profile.weight * 0.8)},
+    "target_carbs": ${Math.round((tdee - 300 - profile.weight * 2.2 * 4 - profile.weight * 0.9 * 9) / 4)},
+    "target_fat": ${Math.round(profile.weight * 0.9)},
     "meal_timing": {
-      "pre_workout": "...",
-      "post_workout": "...",
-      "before_bed": "..."
+      "pre_workout": "<orientação pré-treino em pt-BR>",
+      "post_workout": "<orientação pós-treino em pt-BR>",
+      "before_bed": "<orientação antes de dormir em pt-BR>"
     }
   },
-  "training_plan": "## PLANO DE TREINO\\n\\n[Full detailed markdown training plan...]",
-  "nutrition_plan": "## PLANO NUTRICIONAL\\n\\n[Full detailed markdown nutrition plan...]"
+  "training_plan": "<plano detalhado em markdown COM DIAS DA SEMANA EM PORTUGUÊS, exercícios específicos com séries e reps. Use: Segunda-feira, Terça-feira etc>",
+  "nutrition_plan": "<plano nutricional detalhado em markdown em pt-BR>"
 }`
 
   const messageContent: OpenAI.ChatCompletionContentPart[] = [

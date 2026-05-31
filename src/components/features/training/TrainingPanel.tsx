@@ -72,24 +72,31 @@ function parseTrainingPlan(plan: string): Record<string, string[]> {
       // could be a new day header we didn't catch
     }
 
-    // Parse exercise lines
+    // Parse exercise lines — skip markdown headers and non-exercise text
     if (currentDay && result[currentDay] !== undefined) {
-      // Exercise line: starts with -, *, •, number, or just text with sets info
-      const exMatch = trimmed.match(/^[-*•\d.)\s]*(.+?)(\s*[:—-]\s*\d.*)?$/)
+      // SKIP: markdown headers (#, ##, ###, ####)
+      if (/^#{1,6}\s/.test(trimmed)) continue
+      // SKIP: bold section titles (**text:**)
+      if (/^\*\*[^*]+\*\*:?\s*$/.test(trimmed)) continue
+      // SKIP: lines that are clearly not exercises
+      const skipWords = ['descanso', 'rest', 'recuperação', 'active recovery', 'plano de', 'protocolo', 'semana', 'foco:', 'objetivo:', 'treino de', 'cardio liss', 'notas:', 'obs:', 'importante:', 'dica:']
+      const lowerTrimmed = trimmed.toLowerCase()
+      if (skipWords.some(w => lowerTrimmed === w || lowerTrimmed.startsWith(w + ' ') || lowerTrimmed.startsWith(w + ':') )) continue
+
+      // Exercise line: must start with -, *, •, number, or be a known exercise pattern
+      const exMatch = trimmed.match(/^[-*•\d.)\s]+(.+?)(\s*[:—\-]\s*\d.*)?$/)
       if (exMatch) {
-        const name = exMatch[1].trim()
-        // Must look like an exercise (has letters, not too long, not a header)
+        const name = exMatch[1].replace(/\*\*/g, '').trim()
+        // Must have sets info (xN) OR be preceded by a dash/bullet to count as exercise
+        const hasSets = /\d+[x×]\d+/.test(trimmed)
+        const hasBullet = /^[-*•]/.test(trimmed) || /^\d+[.)]\s/.test(trimmed)
         if (
-          name.length > 2 &&
-          name.length < 80 &&
-          !name.startsWith('#') &&
-          /[a-zA-ZÀ-ú]/.test(name) &&
-          !name.toLowerCase().includes('objetivo') &&
-          !name.toLowerCase().includes('foco') &&
-          !name.toLowerCase().includes('protocolo') &&
+          name.length > 3 &&
+          name.length < 70 &&
+          (hasSets || hasBullet) &&
+          /[a-zA-ZÀ-ú]{3,}/.test(name) &&
           result[currentDay].length < 10
         ) {
-          // Extract sets info if present
           const setsInfo = trimmed.match(/(\d+)[x×](\d+[-–]\d+|\d+)/)
           const exerciseName = setsInfo
             ? `${name.replace(/\s*\d+[x×].*/,'').trim()} — ${setsInfo[0]}`
@@ -127,10 +134,19 @@ function parseWeekSummary(plan: string): Record<string, string> {
   ]
   for (const line of lines) {
     for (const { regex, key } of dayPatterns) {
-      if (regex.test(line) && line.length < 80 && !result[key]) {
-        const clean = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').replace(regex, '').replace(/^[-:|\s]+/, '').trim()
+      if (regex.test(line) && line.length < 120 && !result[key]) {
+        // Remove markdown, day name, "feira", colons, asterisks
+        let clean = line
+          .replace(/^#+\s*/, '')         // headers
+          .replace(/\*\*/g, '')           // bold
+          .replace(/\*/g, '')             // italic
+          .replace(regex, '')             // day name
+          .replace(/^[\s\-:|–—]+/, '')   // leading separators
+          .replace(/[:\-–—]\s*$/, '')    // trailing separators
+          .replace(/feira/gi, '')         // leftover "feira"
+          .replace(/^\s+/, '')
+          .trim()
         if (clean.length > 2) result[key] = clean
-        else result[key] = line.replace(/^#+\s*/, '').replace(/\*\*/g, '').trim()
         break
       }
     }
@@ -365,7 +381,9 @@ export default function TrainingPanel({ profile, onProfileUpdate }: TrainingPane
                     <span className={`text-[11px] font-black uppercase tracking-wider ${isSelected ? 'text-[#E8002D]' : isToday ? 'text-[#E8002D]/60' : 'text-[#444]'}`} style={{ fontFamily: 'var(--font-display)' }}>{day}</span>
                     {isToday && <span className="text-[7px] bg-[#E8002D] text-white px-1 py-0.5 rounded font-bold">HOJE</span>}
                   </div>
-                  <p className="text-[11px] text-[#555] leading-tight truncate">{d?.label || '—'}</p>
+                  <p className="text-[11px] text-[#555] leading-tight truncate">
+              {(d?.label || '—').replace(/^feira[:\s]*/i, '').replace(/\*\*/g, '').trim() || '—'}
+            </p>
                   {totalCount > 0 && (
                     <div className="mt-1.5 flex gap-1">
                       {d.exercises.map((_, i) => (
@@ -385,7 +403,9 @@ export default function TrainingPanel({ profile, onProfileUpdate }: TrainingPane
             <div className="max-w-2xl">
               <div className="mb-6">
                 <h2 className="text-xl font-black text-white uppercase" style={{ fontFamily: 'var(--font-display)' }}>{selectedDay}</h2>
-                <p className="text-[#555] text-sm">{currentDay.label}</p>
+                <p className="text-[#555] text-sm">
+                {(currentDay.label || '').replace(/^feira[:\s]*/i, '').replace(/\*\*/g, '').trim()}
+              </p>
               </div>
 
               {currentDay.exercises.length === 0 ? (
