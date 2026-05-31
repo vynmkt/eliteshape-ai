@@ -1,4 +1,4 @@
-// src/app/api/ai/analyze/route.ts
+﻿// src/app/api/ai/analyze/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { analyzeBodyShape, calculateTDEE } from '@/lib/openai'
@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nenhuma imagem enviada' }, { status: 400 })
     }
 
-    // Check premium for multiple images
     const { data: profileData } = await supabase.from('profiles').select('is_premium').eq('id', user.id).single()
-    const isPremium = (profileData as any)?.is_premium`n    if (!isPremium && images.length > 1) {
+    const isPremium = (profileData as any)?.is_premium
+    if (!isPremium && images.length > 1) {
       return NextResponse.json({ error: 'Plano Premium necessário para múltiplas fotos' }, { status: 403 })
     }
 
