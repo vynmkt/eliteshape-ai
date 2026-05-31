@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
 
     // Check premium for multiple images
     const { data: profileData } = await supabase.from('profiles').select('is_premium').eq('id', user.id).single()
-    if (!profileData?.is_premium && images.length > 1) {
+    const isPremium = (profileData as any)?.is_premium`n    if (!isPremium && images.length > 1) {
       return NextResponse.json({ error: 'Plano Premium necessário para múltiplas fotos' }, { status: 403 })
     }
 
