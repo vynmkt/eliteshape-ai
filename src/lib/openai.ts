@@ -117,23 +117,31 @@ Faça um roast BRUTAL e engraçado desse físico em ${lang}. Seja ácido mas edu
 Retorne JSON: { "roast": "...", "score": 0-10, "priority_actions": ["...", "...", "..."], "fat_percentage_estimate": 0, "training_plan": "...", "nutrition_plan": "..." }`
     : `${profileContext}
 
-VOCÊ ESTÁ VENDO UMA FOTO REAL DE UMA PESSOA REAL. Analise o físico COM PRECISÃO CIRÚRGICA.
+VOCÊ É O MELHOR PERSONAL TRAINER DO BRASIL. Está vendo a foto REAL desta pessoa. Analise com olho clínico de especialista.
 
-REGRAS OBRIGATÓRIAS:
-1. Descreva EXATAMENTE o que você vê na imagem — não use respostas genéricas
-2. Se a pessoa está acima do peso, diga claramente
-3. Se a pessoa tem pouca massa muscular, diga claramente  
-4. Se a pessoa está definida, reconheça isso
-5. Cada pessoa é ÚNICA — pontos fortes e fracos devem ser ESPECÍFICOS para o físico desta foto
-6. O score (1-10) deve refletir a CONDIÇÃO REAL, não ser sempre 7
-7. A % de gordura deve ser ESTIMADA com base no que você vê, não calculada por fórmula
-8. NUNCA use inglês — TODAS as strings em ${lang}
-9. O plano de treino deve ter os dias em PORTUGUÊS (Segunda-feira, Terça-feira, etc)
-10. Os exercícios devem ser adequados ao nível ${profile.training_level} e objetivo ${profile.objective}
+ANÁLISE DO FÍSICO — REGRAS ABSOLUTAS:
+1. DESCREVA O QUE VÊ na foto com riqueza de detalhes — como um preparador físico profissional
+2. Chame a pessoa de "campeão" ou "campeã" na mensagem motivacional
+3. Se tem boa base muscular → reconheça e monte treino PESADO e volumoso (4-5 exercícios por grupo)
+4. Se está acima do peso → diga com respeito e monte treino adequado
+5. Se está definido/a → elogie a condição e ajuste o plano para o próximo nível
+6. Score REAL (1-10): 1-3 = iniciante sem treino, 4-5 = treina mas tem bastante a melhorar, 6-7 = boa base, 8-9 = atleta avançado, 10 = elite
+7. % gordura: estime visualmente (não use fórmula) — se vê barriga proeminente = 20%+, se tem definição abdominal = abaixo de 15%
+8. NUNCA use inglês — TUDO em ${lang}
 
-Exemplos do que descrever em strong_points e weak_points:
-- CORRETO: "Ombros largos com boa inserção do deltóide lateral", "Excesso de gordura abdominal visível"
-- ERRADO: "Broad shoulders" (inglês), "Good muscle development" (genérico)
+PLANO DE TREINO — COMO UM TREINADOR REAL:
+- Se tem boa base muscular (muscle_mass = high ou very_high): monte treino SÉRIO de atleta
+  * Peito: 4-5 exercícios (supino reto, inclinado, crucifixo, peck deck, paralela)
+  * Costas: 4-5 exercícios (barra fixa, remada curvada, remada baixa, pulldown, serrote)
+  * Ombro: dia exclusivo com 5 exercícios (desenvolvimento, elevação lateral, elevação frontal, crucifixo invertido, encolhimento)
+  * Perna: dia completo (agachamento, leg press, extensora, flexora, panturrilha, adutora)
+  * Bíceps: 3 exercícios isolados + Tríceps: 3 exercícios isolados
+- Se tem base moderada: 3-4 exercícios por grupo
+- Se é iniciante: 2-3 exercícios por grupo, básicos
+- SEMPRE especifique séries e repetições reais: "4x10-12", "5x8-10", "3x15"
+- Distribua 5-6 dias de treino se o nível permitir
+
+MENSAGEM MOTIVACIONAL: personalizada para o físico desta pessoa, chame de campeão/campeã, mencione o que você viu de específico na foto, seja entusiasmado e direto
 
 Retorne APENAS JSON válido com esta estrutura exata:
 {
@@ -214,14 +222,32 @@ export async function generatePlanFromProfile(params: {
       { role: 'system', content: `${ELITE_COACH_PERSONA}\nLanguage: ${lang}` },
       {
         role: 'user',
-        content: `Create a complete personalized training and nutrition plan for:
-Age: ${profile.age} | Height: ${profile.height}cm | Weight: ${profile.weight}kg
-Gender: ${profile.gender} | Level: ${profile.training_level} | Goal: ${profile.objective}
-Activity: ${profile.activity_level} | TDEE: ${tdee}kcal
-Training time: ${profile.training_time} | Sleep: ${profile.sleep}h
-Budget: ${profile.financial_condition} | Supplements: ${profile.wants_supplements}
+        content: `Você é o melhor personal trainer do Brasil. Monte um plano COMPLETO e REAL para:
+Idade: ${profile.age} anos | Altura: ${profile.height}cm | Peso: ${profile.weight}kg
+Sexo: ${profile.gender} | Nível: ${profile.training_level} | Objetivo: ${profile.objective}
+Frequência: ${profile.activity_level} | TDEE: ${tdee}kcal
+Horário de treino: ${profile.training_time} | Sono: ${profile.sleep}h
+Saúde/Lesões: ${profile.health_conditions || 'nenhuma'}
+Orçamento: ${profile.financial_condition} | Suplementos: ${profile.wants_supplements}
+Dieta: ${profile.current_diet}
 
-Return JSON: { "training_plan": "markdown", "nutrition_plan": "markdown", "week_protocol": {}, "nutrition_schedule": { "target_calories": 0, "target_protein": 0, "target_carbs": 0, "target_fat": 0 }, "motivational_message": "..." }`
+REGRAS DO PLANO DE TREINO:
+- Iniciante: 3 dias, 2-3 exercícios por grupo, básicos
+- Intermediário: 4-5 dias, 3-4 exercícios por grupo muscular
+- Avançado: 5-6 dias, 4-5 exercícios por grupo, treinos dedicados (ombro isolado, perna completo)
+- SEMPRE com séries e repetições: "4x10-12", "3x8-10", "5x15"
+- Se avançado: Peito tem 4 exercícios, Costas tem 4-5, Ombro tem dia exclusivo com 5 exercícios, Perna completa em dia exclusivo
+- Adapte para lesões/condições de saúde informadas
+- Use dias da semana em PT: Segunda-feira, Terça-feira, etc
+- Chame de campeão/campeã na mensagem motivacional
+
+REGRAS DO PLANO NUTRICIONAL:
+- Com quantidades reais: "150g frango grelhado", "200g arroz integral cozido", "2 ovos inteiros"
+- Dividido por refeições: Café da manhã, Almoço, Jantar, Lanches, Pré-treino, Pós-treino
+- Adequado ao orçamento e preferências alimentares informadas
+- Total de calorias próximo de ${tdee}kcal
+
+Retorne JSON: { "training_plan": "markdown detalhado", "nutrition_plan": "markdown com quantidades", "week_protocol": {"Segunda": "...", "Terça": "..."}, "nutrition_schedule": { "target_calories": ${tdee}, "target_protein": ${Math.round(profile.weight * 2.2)}, "target_carbs": ${Math.round(profile.weight * 3)}, "target_fat": ${Math.round(profile.weight * 0.8)} }, "motivational_message": "mensagem personalizada chamando de campeão/campeã" }`
       }
     ],
     max_tokens: 3000,
